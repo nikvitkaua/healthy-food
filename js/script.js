@@ -122,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   modal.addEventListener('click', (event) => {
-    if (event.target === modal || e.target.getAttribute('data-close') == '') {
+    if (event.target === modal || event.target.getAttribute('data-close') == '') {
       closeModal();
     }
   });
@@ -238,10 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
       form.insertAdjacentElement('afterend', statusMessage);
 
-      const req = new XMLHttpRequest();
-      req.open('POST', 'server.php');
-
-      req.setRequestHeader('Content-type', 'application/json');
       const formData = new FormData(form);
 
       const obj = {};
@@ -250,19 +246,22 @@ document.addEventListener("DOMContentLoaded", () => {
         obj[key] = value;
       });
 
-      const json = JSON.stringify(obj);
-
-      req.send(json);
-
-      req.addEventListener('load', () => {
-        if (req.status === 200) {
-          console.log(req.response);
-          showThanksModal(message.success);
-          form.reset();     
-          statusMessage.remove();
-        } else {
-          showThanksModal(message.failure);
-        }
+      fetch('server.php', {
+        method: 'POST',
+        headers: {
+          'Content-type': 'application/json'
+        },
+        body: JSON.stringify(obj)
+      })
+      .then(data => data.text())
+      .then(data => {
+        console.log(data);
+        showThanksModal(message.success);
+        statusMessage.remove();
+      }).catch(() => {
+        showThanksModal(message.failure);
+      }).finally(() => {
+        form.reset(); 
       });
     });
   }
