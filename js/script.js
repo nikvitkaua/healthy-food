@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Modal
   const modalTriggers = document.querySelectorAll('[data-modal]');
   const modal = document.querySelector('.modal');
-  const modalCloseBtn = modal.querySelector('[data-close]');
 
   modalTriggers.forEach(item => {
     item.addEventListener('click', openModal)
@@ -122,10 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.overflow = '';
   }
 
-  modalCloseBtn.addEventListener('click', closeModal);
-
   modal.addEventListener('click', (event) => {
-    if (event.target === modal) {
+    if (event.target === modal || e.target.getAttribute('data-close') == '') {
       closeModal();
     }
   });
@@ -220,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Forms
   const forms = document.querySelectorAll('form');
   const message = {
-    loading: 'Loading...',
+    loading: 'img/form/spinner.svg',
     success: 'Thanks, contact u asap!',
     failure: 'Something went wrong...'
   };
@@ -233,10 +230,13 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const statusMessage = document.createElement('div');
-      statusMessage.classList.add('status');
-      statusMessage.textContent = message.loading;
-      form.append(statusMessage);
+      const statusMessage = document.createElement('img');
+      statusMessage.src = message.loading;
+      statusMessage.style.cssText = `
+        display: block;
+        margin: 0 auto;
+      `;
+      form.insertAdjacentElement('afterend', statusMessage);
 
       const req = new XMLHttpRequest();
       req.open('POST', 'server.php');
@@ -257,15 +257,37 @@ document.addEventListener("DOMContentLoaded", () => {
       req.addEventListener('load', () => {
         if (req.status === 200) {
           console.log(req.response);
-          statusMessage.textContent = message.success;
-          form.reset();
-          setTimeout(() => {
-            statusMessage.remove();
-          });
+          showThanksModal(message.success);
+          form.reset();     
+          statusMessage.remove();
         } else {
-          statusMessage.textContent = message.failure;
+          showThanksModal(message.failure);
         }
       });
     });
+  }
+
+  function showThanksModal(message) {
+    const prevModalDialog = document.querySelector('.modal__dialog');
+
+    prevModalDialog.classList.add('hide');
+    openModal();
+
+    const thanksModal = document.createElement('div');
+    thanksModal.classList.add('modal__dialog');
+    thanksModal.innerHTML = `
+      <div class="modal__content">
+        <div data-close class="modal__close">×</div>
+        <div class="modal__title">${message}</div>
+      </div>
+    `;
+
+    document.querySelector('.modal').append(thanksModal);
+    setTimeout(() => {
+      thanksModal.remove();
+      prevModalDialog.classList.add('show');
+      prevModalDialog.classList.remove('hide');
+      closeModal();
+    }, 4000)
   }
 });
